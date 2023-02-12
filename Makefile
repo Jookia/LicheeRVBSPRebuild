@@ -90,10 +90,12 @@ build-opensbi $(BLDDIR)/.build-opensbi: $(BLDDIR)/.prepare-opensbi
 clean-prepare:
 	rm -rf $(BLDDIR)/.prepare-kernel
 	rm -rf $(BLDDIR)/.prepare-spl
+	rm -rf $(BLDDIR)/.prepare-opensbi
 
 clean-build:
 	rm -rf $(BLDDIR)/.build-kernel
 	rm -rf $(BLDDIR)/.build-spl
+	rm -rf $(BLDDIR)/.build-opensbi
 	rm -rf $(BLDDIR)/Image
 	rm -rf $(BLDDIR)/lib
 
