@@ -74,14 +74,14 @@ build-linux $(BLDDIR)/.build-linux: $(BLDDIR)/.prepare-linux
 	touch $(BLDDIR)/.build-linux
 
 build-spl $(BLDDIR)/.build-spl: $(BLDDIR)/.prepare-spl
-	@set ex
+	@set -ex
 	cd $(BLDDIR)/spl
 	export CROSS_COMPILE=$(CROSS_COMPILE)
 	make p=sun20iw1p1 mmc nand spinor fes
 	touch $(BLDDIR)/.build-spl
 
 build-opensbi $(BLDDIR)/.build-opensbi: $(BLDDIR)/.prepare-opensbi
-	@set ex
+	@set -ex
 	cd $(BLDDIR)/opensbi
 	export CROSS_COMPILE=$(CROSS_COMPILE)
 	make PLATFORM=thead/c910 SUNXI_CHIP=sun20iw1p1 PLATFORM_RISCV_ISA=rv64gc
