@@ -11,11 +11,11 @@ ATTIC=$(PWD)/attic
 PATCHES=$(PWD)/patches
 
 KERNELGIT=https://dl.linux-sunxi.org/D1/SDK/projects/lichee/linux-5.4.git
-KERNELTAG=smartx-d1-tina-v1.0.1-release
+KERNELCOMMIT=035e3450a899008ef15bb387d0ed41aafd733a8a # smartx-d1-tina-v1.0.1-release
 SPLGIT=https://github.com/smaeul/sun20i_d1_spl
-SPLTAG=d1-2022-04-16
+SPLCOMMIT=882671fcf53137aaafc3a94fa32e682cb7b921f1 # d1-2022-04-16
 OPENSBIGIT=https://dl.linux-sunxi.org/D1/SDK/projects/lichee/brandy-2.0/opensbi.git
-OPENSBITAG=product-smartx-d1-tina-v1.0-release
+OPENSBICOMMIT=c50b19bc79b2cc5bf70089d61fadc7f86fcac4b1 # product-smartx-d1-tina-v1.0-release
 
 .ONESHELL:
 SHELL=/usr/bin/bash
@@ -25,21 +25,21 @@ $(BLDDIR)/.init:
 	touch $(BLDDIR)/.init
 
 download-linux $(BLDDIR)/.download-linux: $(BLDDIR)/.init
-	git clone "$(KERNELGIT)" -b "$(KERNELTAG)" $(BLDDIR)/linux
+	git clone "$(KERNELGIT)" -b "$(KERNELCOMMIT)" $(BLDDIR)/linux
 	touch $(BLDDIR)/.download-linux
 
 download-spl $(BLDDIR)/.download-spl: $(BLDDIR)/.init
-	git clone "$(SPLGIT)" -b "$(SPLTAG)" $(BLDDIR)/spl
+	git clone "$(SPLGIT)" -b "$(SPLCOMMIT)" $(BLDDIR)/spl
 	touch $(BLDDIR)/.download-spl
 
 download-opensbi $(BLDDIR)/.download-opensbi: $(BLDDIR)/.init
-	git clone "$(OPENSBIGIT)" -b "$(OPENSBITAG)" $(BLDDIR)/opensbi
+	git clone "$(OPENSBIGIT)" -b "$(OPENSBICOMMIT)" $(BLDDIR)/opensbi
 	touch $(BLDDIR)/.download-opensbi
 
 prepare-linux $(BLDDIR)/.prepare-linux: $(BLDDIR)/.download-linux
 	@set -ex
 	cd $(BLDDIR)/linux
-	git restore -W -S -s "$(KERNELTAG)" .
+	git restore -W -S -s "$(KERNELCOMMIT)" .
 	git clean -dfx
 	patch -p1 < $(ATTIC)/linux-tina-diff.patch
 	patch -p1 < $(PATCHES)/linux.patch
@@ -50,14 +50,14 @@ prepare-linux $(BLDDIR)/.prepare-linux: $(BLDDIR)/.download-linux
 prepare-spl $(BLDDIR)/.prepare-spl: $(BLDDIR)/.download-spl
 	@set -ex
 	cd $(BLDDIR)/spl
-	git restore -W -S -s "$(SPLTAG)" .
+	git restore -W -S -s "$(SPLCOMMIT)" .
 	git clean -dfx
 	touch $(BLDDIR)/.prepare-spl
 
 prepare-opensbi $(BLDDIR)/.prepare-opensbi: $(BLDDIR)/.download-opensbi
 	@set -ex
 	cd $(BLDDIR)/opensbi
-	git restore -W -S -s "$(OPENSBITAG)" .
+	git restore -W -S -s "$(OPENSBICOMMIT)" .
 	git clean -dfx
 	patch -p1 < $(PATCHES)/opensbi.patch
 	touch $(BLDDIR)/.prepare-opensbi
