@@ -12,6 +12,8 @@ ROOT=$(PWD)
 
 KERNELGIT=https://dl.linux-sunxi.org/D1/SDK/projects/lichee/linux-5.4.git
 KERNELTAG=smartx-d1-tina-v1.0.1-release
+SPLGIT=https://github.com/smaeul/sun20i_d1_spl
+SPLTAG=d1-2022-04-16
 
 .ONESHELL:
 SHELL=/usr/bin/bash
@@ -27,6 +29,13 @@ download-kernel $(BLDDIR)/.download-kernel: $(BLDDIR)/.init
 	git -C linux checkout $(KERNELTAG)
 	touch $(BLDDIR)/.download-kernel
 
+download-spl $(BLDDIR)/.download-spl: $(BLDDIR)/.init
+	@set -ex
+	cd $(BLDDIR)
+	git clone "$(SPLGIT)" spl
+	git -C spl checkout $(SPLTAG)
+	touch $(BLDDIR)/.download-spl
+
 prepare-kernel $(BLDDIR)/.prepare-kernel: $(BLDDIR)/.download-kernel
 	@set -ex
 	export ARCH=riscv
@@ -41,6 +50,9 @@ prepare-kernel $(BLDDIR)/.prepare-kernel: $(BLDDIR)/.download-kernel
 	make ARCH=riscv olddefconfig
 	touch $(BLDDIR)/.prepare-kernel
 
+prepare-spl $(BLDDIR)/.prepare-spl: $(BLDDIR)/.download-spl
+	touch $(BLDDIR)/.prepare-spl
+
 build-kernel $(BLDDIR)/.build-kernel: $(BLDDIR)/.prepare-kernel
 	@set -ex
 	cd $(BLDDIR)/linux
@@ -52,15 +64,23 @@ build-kernel $(BLDDIR)/.build-kernel: $(BLDDIR)/.prepare-kernel
 	cp arch/riscv/boot/Image $(BLDDIR)/Image
 	touch $(BLDDIR)/.build-kernel
 
+build-spl $(BLDDIR)/.build-spl: $(BLDDIR)/.prepare-spl
+	@set ex
+	cd $(BLDDIR)/spl
+	export CROSS_COMPILE=$(CROSS_COMPILE)
+	make p=sun20iw1p1 mmc nand spinor fes
+
 clean-prepare:
 	rm -rf $(BLDDIR)/.prepare-kernel
+	rm -rf $(BLDDIR)/.prepare-spl
 
 clean-build:
 	rm -rf $(BLDDIR)/.build-kernel
+	rm -rf $(BLDDIR)/.build-spl
 	rm -rf $(BLDDIR)/Image
 	rm -rf $(BLDDIR)/lib
 
-prepare: $(BLDDIR)/.prepare-kernel
-build: $(BLDDIR)/.build-kernel
+prepare: $(BLDDIR)/.prepare-kernel $(BLDDIR)/.prepare-spl
+build: $(BLDDIR)/.build-kernel $(BLDDIR)/.build-spl
 rebuild: clean-build build
 reprepare: clean-build clean-prepare prepare
