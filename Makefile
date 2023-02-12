@@ -38,9 +38,9 @@ prepare-kernel $(BLDDIR)/.prepare-kernel: $(BLDDIR)/.download-kernel
 	git clean -dfx
 	patch -p1 < $(ATTIC)/linux-tina-diff.patch
 	patch -p1 < $(ROOT)/gcc12fix.patch
+	patch -p1 < $(ROOT)/vectorfix.patch
 	echo "" > arch/riscv/boot/dts/sunxi/Makefile # Disable DTB build
 	cp $(ATTIC)/linux-tina.config .config
-	sed -i '/^CONFIG_VECTOR=y/d' .config # Vector requires custom toolchain
 	make ARCH=riscv olddefconfig
 	touch $(BLDDIR)/.prepare-kernel
 
