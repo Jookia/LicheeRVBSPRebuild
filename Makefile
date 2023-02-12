@@ -99,7 +99,7 @@ clean-build:
 	rm -rf $(BLDDIR)/Image
 	rm -rf $(BLDDIR)/lib
 
-prepare: $(BLDDIR)/.prepare-linux $(BLDDIR)/.prepare-spl$(BLDDIR)/.prepare-opensbi
+prepare: $(BLDDIR)/.prepare-linux $(BLDDIR)/.prepare-spl $(BLDDIR)/.prepare-opensbi
 build: $(BLDDIR)/.build-linux $(BLDDIR)/.build-spl $(BLDDIR)/.build-opensbi
 rebuild: clean-build build
 reprepare: clean-build clean-prepare prepare
