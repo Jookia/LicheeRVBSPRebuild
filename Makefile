@@ -4,7 +4,6 @@
 # Change this if you want!
 CROSS_COMPILE=/usr/bin/riscv64-linux-gnu-
 NPROC=$(shell nproc)
-DTS=$(ATTIC)/dts/board_waft.dts # Used by Sipeed
 
 BLDDIR=$(PWD)/build
 ATTIC=$(PWD)/attic
