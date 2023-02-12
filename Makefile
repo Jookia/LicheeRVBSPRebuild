@@ -67,6 +67,7 @@ build-spl $(BLDDIR)/.build-spl: $(BLDDIR)/.prepare-spl
 	cd $(BLDDIR)/spl
 	export CROSS_COMPILE=$(CROSS_COMPILE)
 	make p=sun20iw1p1 mmc nand spinor fes
+	touch $(BLDDIR)/.build-spl
 
 clean-prepare:
 	rm -rf $(BLDDIR)/.prepare-kernel
