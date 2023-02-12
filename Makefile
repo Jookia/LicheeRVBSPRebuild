@@ -8,7 +8,7 @@ DTS=$(ATTIC)/dts/board_waft.dts # Used by Sipeed
 
 BLDDIR=$(PWD)/build
 ATTIC=$(PWD)/attic
-ROOT=$(PWD)
+PATCHES=$(PWD)/patches
 
 KERNELGIT=https://dl.linux-sunxi.org/D1/SDK/projects/lichee/linux-5.4.git
 KERNELTAG=smartx-d1-tina-v1.0.1-release
@@ -38,14 +38,11 @@ download-opensbi $(BLDDIR)/.download-opensbi: $(BLDDIR)/.init
 
 prepare-kernel $(BLDDIR)/.prepare-kernel: $(BLDDIR)/.download-kernel
 	@set -ex
-	export ARCH=riscv
 	cd $(BLDDIR)/linux
 	git restore -W -S -s "$(KERNELTAG)" .
 	git clean -dfx
 	patch -p1 < $(ATTIC)/linux-tina-diff.patch
-	patch -p1 < $(ROOT)/gcc12fix.patch
-	patch -p1 < $(ROOT)/vectorfix.patch
-	echo "" > arch/riscv/boot/dts/sunxi/Makefile # Disable DTB build
+	patch -p1 < $(PATCHES)/kernel.patch
 	cp $(ATTIC)/linux-tina.config .config
 	make ARCH=riscv olddefconfig
 	touch $(BLDDIR)/.prepare-kernel
@@ -62,7 +59,7 @@ prepare-opensbi $(BLDDIR)/.prepare-opensbi: $(BLDDIR)/.download-opensbi
 	cd $(BLDDIR)/opensbi
 	git restore -W -S -s "$(OPENSBITAG)" .
 	git clean -dfx
-	patch -p1 < $(ROOT)/opensbifix.patch
+	patch -p1 < $(PATCHES)/opensbi.patch
 	touch $(BLDDIR)/.prepare-opensbi
 
 build-kernel $(BLDDIR)/.build-kernel: $(BLDDIR)/.prepare-kernel

@@ -1,3 +1,25 @@
+diff --git a/arch/riscv/Makefile b/arch/riscv/Makefile
+index 972fe3492..6c585a3b9 100644
+--- a/arch/riscv/Makefile
++++ b/arch/riscv/Makefile
+@@ -46,6 +46,9 @@ riscv-march-aflags-$(CONFIG_RISCV_ISA_C)	:= $(riscv-march-aflags-y)c
+ riscv-march-aflags-$(CONFIG_VECTOR)		:= $(riscv-march-aflags-y)v
+ riscv-march-aflags-$(CONFIG_RISCV_ISA_THEAD)	:= $(riscv-march-aflags-y)xthead
+ 
++riscv-march-cflags-y := $(riscv-march-cflags-y)_zicsr_zifencei
++riscv-march-aflags-y := $(riscv-march-aflags-y)_zicsr_zifencei
++
+ KBUILD_CFLAGS += -march=$(riscv-march-cflags-y) -Wa,-march=$(riscv-march-aflags-y)
+ KBUILD_AFLAGS += -march=$(riscv-march-aflags-y)
+ 
+diff --git a/arch/riscv/boot/dts/sunxi/Makefile b/arch/riscv/boot/dts/sunxi/Makefile
+index 7a7c38bb7..8b1378917 100644
+--- a/arch/riscv/boot/dts/sunxi/Makefile
++++ b/arch/riscv/boot/dts/sunxi/Makefile
+@@ -1,2 +1 @@
+-# SPDX-License-Identifier: GPL-2.0
+-dtb-$(CONFIG_ARCH_SUNXI) += board.dtb
++
 diff --git a/arch/riscv/kernel/vector.S b/arch/riscv/kernel/vector.S
 index 0afc308a6..5b9abe3a8 100644
 --- a/arch/riscv/kernel/vector.S
