@@ -24,9 +24,9 @@ $(BLDDIR)/.init:
 	mkdir -p $(BLDDIR)
 	touch $(BLDDIR)/.init
 
-download-kernel $(BLDDIR)/.download-kernel: $(BLDDIR)/.init
+download-linux $(BLDDIR)/.download-linux: $(BLDDIR)/.init
 	git clone "$(KERNELGIT)" -b "$(KERNELTAG)" $(BLDDIR)/linux
-	touch $(BLDDIR)/.download-kernel
+	touch $(BLDDIR)/.download-linux
 
 download-spl $(BLDDIR)/.download-spl: $(BLDDIR)/.init
 	git clone "$(SPLGIT)" -b "$(SPLTAG)" $(BLDDIR)/spl
@@ -36,16 +36,16 @@ download-opensbi $(BLDDIR)/.download-opensbi: $(BLDDIR)/.init
 	git clone "$(OPENSBIGIT)" -b "$(OPENSBITAG)" $(BLDDIR)/opensbi
 	touch $(BLDDIR)/.download-opensbi
 
-prepare-kernel $(BLDDIR)/.prepare-kernel: $(BLDDIR)/.download-kernel
+prepare-linux $(BLDDIR)/.prepare-linux: $(BLDDIR)/.download-linux
 	@set -ex
 	cd $(BLDDIR)/linux
 	git restore -W -S -s "$(KERNELTAG)" .
 	git clean -dfx
 	patch -p1 < $(ATTIC)/linux-tina-diff.patch
-	patch -p1 < $(PATCHES)/kernel.patch
+	patch -p1 < $(PATCHES)/linux.patch
 	cp $(ATTIC)/linux-tina.config .config
 	make ARCH=riscv olddefconfig
-	touch $(BLDDIR)/.prepare-kernel
+	touch $(BLDDIR)/.prepare-linux
 
 prepare-spl $(BLDDIR)/.prepare-spl: $(BLDDIR)/.download-spl
 	@set -ex
@@ -62,7 +62,7 @@ prepare-opensbi $(BLDDIR)/.prepare-opensbi: $(BLDDIR)/.download-opensbi
 	patch -p1 < $(PATCHES)/opensbi.patch
 	touch $(BLDDIR)/.prepare-opensbi
 
-build-kernel $(BLDDIR)/.build-kernel: $(BLDDIR)/.prepare-kernel
+build-linux $(BLDDIR)/.build-linux: $(BLDDIR)/.prepare-linux
 	@set -ex
 	cd $(BLDDIR)/linux
 	export ARCH=riscv
@@ -71,7 +71,7 @@ build-kernel $(BLDDIR)/.build-kernel: $(BLDDIR)/.prepare-kernel
 	make -j$(NPROC) modules
 	make -j$(NPROC) modules_install INSTALL_MOD_PATH=$(BLDDIR)
 	cp arch/riscv/boot/Image $(BLDDIR)/Image
-	touch $(BLDDIR)/.build-kernel
+	touch $(BLDDIR)/.build-linux
 
 build-spl $(BLDDIR)/.build-spl: $(BLDDIR)/.prepare-spl
 	@set ex
@@ -88,18 +88,18 @@ build-opensbi $(BLDDIR)/.build-opensbi: $(BLDDIR)/.prepare-opensbi
 	touch $(BLDDIR)/.build-opensbi
 
 clean-prepare:
-	rm -rf $(BLDDIR)/.prepare-kernel
+	rm -rf $(BLDDIR)/.prepare-linux
 	rm -rf $(BLDDIR)/.prepare-spl
 	rm -rf $(BLDDIR)/.prepare-opensbi
 
 clean-build:
-	rm -rf $(BLDDIR)/.build-kernel
+	rm -rf $(BLDDIR)/.build-linux
 	rm -rf $(BLDDIR)/.build-spl
 	rm -rf $(BLDDIR)/.build-opensbi
 	rm -rf $(BLDDIR)/Image
 	rm -rf $(BLDDIR)/lib
 
-prepare: $(BLDDIR)/.prepare-kernel $(BLDDIR)/.prepare-spl$(BLDDIR)/.prepare-opensbi
-build: $(BLDDIR)/.build-kernel $(BLDDIR)/.build-spl $(BLDDIR)/.build-opensbi
+prepare: $(BLDDIR)/.prepare-linux $(BLDDIR)/.prepare-spl$(BLDDIR)/.prepare-opensbi
+build: $(BLDDIR)/.build-linux $(BLDDIR)/.build-spl $(BLDDIR)/.build-opensbi
 rebuild: clean-build build
 reprepare: clean-build clean-prepare prepare
