@@ -34,7 +34,7 @@ prepare-kernel $(BLDDIR)/.prepare-kernel: $(BLDDIR)/.download-kernel
 	@set -ex
 	export ARCH=riscv
 	cd $(BLDDIR)/linux
-	git restore -W -S -s $(KERNELTAG) .
+	git restore -W -S -s "$(KERNELTAG)" .
 	git clean -dfx
 	patch -p1 < $(ATTIC)/linux-tina-diff.patch
 	patch -p1 < $(ROOT)/gcc12fix.patch
@@ -45,6 +45,10 @@ prepare-kernel $(BLDDIR)/.prepare-kernel: $(BLDDIR)/.download-kernel
 	touch $(BLDDIR)/.prepare-kernel
 
 prepare-spl $(BLDDIR)/.prepare-spl: $(BLDDIR)/.download-spl
+	@set -ex
+	cd $(BLDDIR)/spl
+	git restore -W -S -s "$(SPLTAG)" .
+	git clean -dfx
 	touch $(BLDDIR)/.prepare-spl
 
 build-kernel $(BLDDIR)/.build-kernel: $(BLDDIR)/.prepare-kernel
