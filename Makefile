@@ -14,6 +14,8 @@ KERNELGIT=https://dl.linux-sunxi.org/D1/SDK/projects/lichee/linux-5.4.git
 KERNELTAG=smartx-d1-tina-v1.0.1-release
 SPLGIT=https://github.com/smaeul/sun20i_d1_spl
 SPLTAG=d1-2022-04-16
+OPENSBIGIT=https://dl.linux-sunxi.org/D1/SDK/projects/lichee/brandy-2.0/opensbi.git
+OPENSBITAG=product-smartx-d1-tina-v1.0-release
 
 .ONESHELL:
 SHELL=/usr/bin/bash
@@ -29,6 +31,10 @@ download-kernel $(BLDDIR)/.download-kernel: $(BLDDIR)/.init
 download-spl $(BLDDIR)/.download-spl: $(BLDDIR)/.init
 	git clone "$(SPLGIT)" -b "$(SPLTAG)" $(BLDDIR)/spl
 	touch $(BLDDIR)/.download-spl
+
+download-opensbi $(BLDDIR)/.download-opensbi: $(BLDDIR)/.init
+	git clone "$(OPENSBIGIT)" -b "$(OPENSBITAG)" $(BLDDIR)/opensbi
+	touch $(BLDDIR)/.download-opensbi
 
 prepare-kernel $(BLDDIR)/.prepare-kernel: $(BLDDIR)/.download-kernel
 	@set -ex
@@ -51,6 +57,14 @@ prepare-spl $(BLDDIR)/.prepare-spl: $(BLDDIR)/.download-spl
 	git clean -dfx
 	touch $(BLDDIR)/.prepare-spl
 
+prepare-opensbi $(BLDDIR)/.prepare-opensbi: $(BLDDIR)/.download-opensbi
+	@set -ex
+	cd $(BLDDIR)/opensbi
+	git restore -W -S -s "$(OPENSBITAG)" .
+	git clean -dfx
+	patch -p1 < $(ROOT)/opensbifix.patch
+	touch $(BLDDIR)/.prepare-opensbi
+
 build-kernel $(BLDDIR)/.build-kernel: $(BLDDIR)/.prepare-kernel
 	@set -ex
 	cd $(BLDDIR)/linux
@@ -69,6 +83,13 @@ build-spl $(BLDDIR)/.build-spl: $(BLDDIR)/.prepare-spl
 	make p=sun20iw1p1 mmc nand spinor fes
 	touch $(BLDDIR)/.build-spl
 
+build-opensbi $(BLDDIR)/.build-opensbi: $(BLDDIR)/.prepare-opensbi
+	@set ex
+	cd $(BLDDIR)/opensbi
+	export CROSS_COMPILE=$(CROSS_COMPILE)
+	make PLATFORM=thead/c910 SUNXI_CHIP=sun20iw1p1 PLATFORM_RISCV_ISA=rv64gc
+	touch $(BLDDIR)/.build-opensbi
+
 clean-prepare:
 	rm -rf $(BLDDIR)/.prepare-kernel
 	rm -rf $(BLDDIR)/.prepare-spl
@@ -79,7 +100,7 @@ clean-build:
 	rm -rf $(BLDDIR)/Image
 	rm -rf $(BLDDIR)/lib
 
-prepare: $(BLDDIR)/.prepare-kernel $(BLDDIR)/.prepare-spl
-build: $(BLDDIR)/.build-kernel $(BLDDIR)/.build-spl
+prepare: $(BLDDIR)/.prepare-kernel $(BLDDIR)/.prepare-spl$(BLDDIR)/.prepare-opensbi
+build: $(BLDDIR)/.build-kernel $(BLDDIR)/.build-spl $(BLDDIR)/.build-opensbi
 rebuild: clean-build build
 reprepare: clean-build clean-prepare prepare

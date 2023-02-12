@@ -1,0 +1,173 @@
+diff --git a/Makefile b/Makefile
+index ccf8ea3..b440091 100644
+--- a/Makefile
++++ b/Makefile
+@@ -166,7 +166,7 @@ GENFLAGS	+=	$(libsbiutils-genflags-y)
+ GENFLAGS	+=	$(platform-genflags-y)
+ GENFLAGS	+=	$(firmware-genflags-y)
+ 
+-CFLAGS		=	-g -Wall -Werror -ffreestanding -nostdlib -fno-strict-aliasing -O2
++CFLAGS		=	-g -Wall -ffreestanding -nostdlib -fno-strict-aliasing -O2
+ CFLAGS		+=	-fno-omit-frame-pointer -fno-optimize-sibling-calls
+ CFLAGS		+=	-mno-save-restore -mstrict-align
+ CFLAGS		+=	-mabi=$(PLATFORM_RISCV_ABI) -march=$(PLATFORM_RISCV_ISA)
+diff --git a/platform/thead/c910/standby-normal/loadelf.c b/platform/thead/c910/standby-normal/loadelf.c
+index 6be5cf5..89fdabe 100644
+--- a/platform/thead/c910/standby-normal/loadelf.c
++++ b/platform/thead/c910/standby-normal/loadelf.c
+@@ -207,7 +207,7 @@ void load_standby_elf(int level)
+ 	uint64_t mhcr;
+ 
+ 	mhcr = csr_read(CSR_MHCRA);
+-	asm volatile ("dcache.call");
++	asm volatile (".word 0x0010000bd"); /* dcache.call */
+ 	csr_write(CSR_MHCRA, 0);
+ 
+ 	mie_reg = csr_read_clear(mie, (MIE_STIE | MIE_MTIE));
+diff --git a/platform/thead/c910/standby-normal/sunxi-standby/Makefile b/platform/thead/c910/standby-normal/sunxi-standby/Makefile
+index 44e0304..f71c046 100644
+--- a/platform/thead/c910/standby-normal/sunxi-standby/Makefile
++++ b/platform/thead/c910/standby-normal/sunxi-standby/Makefile
+@@ -17,7 +17,7 @@ INCLUDE = -Iinclude
+ INCLUDE += -Iclk/$(STANDBY)/
+ INCLUDE += -Idram/
+ 
+-KBUILD_CFLAGS := -g -c -nostdlib -DSRAM_BASE=$(SRAM_BASE) -fno-unwind-tables -fno-jump-tables -fno-asynchronous-unwind-tables -O2 -mcmodel=medany
++KBUILD_CFLAGS := -g -c -nostdlib -DSRAM_BASE=$(SRAM_BASE) -fno-unwind-tables -fno-jump-tables -fno-asynchronous-unwind-tables -O2 -mcmodel=medany -ffreestanding
+ LD_FLAGS = -static
+ 
+ standby-c := $(wildcard *.c dram/dram.c clk/$(STANDBY)/*.c libsrc/*.c power/$(STANDBY)/*.c \
+diff --git a/platform/thead/c910/standby-normal/sunxi-standby/dram/sun20iw1p1/mctl_standby-sun8iw20.S b/platform/thead/c910/standby-normal/sunxi-standby/dram/sun20iw1p1/mctl_standby-sun8iw20.S
+index 73c4596..30710d1 100755
+--- a/platform/thead/c910/standby-normal/sunxi-standby/dram/sun20iw1p1/mctl_standby-sun8iw20.S
++++ b/platform/thead/c910/standby-normal/sunxi-standby/dram/sun20iw1p1/mctl_standby-sun8iw20.S
+@@ -1,3 +1,4 @@
++	.include "../../../../t-head-compat.inc"
+ 	.file	"mctl_standby-sun8iw20.c"
+ 	.option nopic
+ 	.text
+diff --git a/platform/thead/c910/standby-normal/sunxi-standby/sunxi_standby.S b/platform/thead/c910/standby-normal/sunxi-standby/sunxi_standby.S
+index ec67b15..75b3457 100644
+--- a/platform/thead/c910/standby-normal/sunxi-standby/sunxi_standby.S
++++ b/platform/thead/c910/standby-normal/sunxi-standby/sunxi_standby.S
+@@ -1,5 +1,6 @@
+ // SPDX-License-Identifier: BSD-2-Clause
+ 
++#include "../../t-head-compat.inc"
+ #include "sunxi_cpu.h"
+ 
+ 
+diff --git a/platform/thead/c910/sunxi_cpuidle.S b/platform/thead/c910/sunxi_cpuidle.S
+index 86e364f..0d7a614 100644
+--- a/platform/thead/c910/sunxi_cpuidle.S
++++ b/platform/thead/c910/sunxi_cpuidle.S
+@@ -8,6 +8,7 @@
+  */
+ 
+ #include "sunxi_cpuidle.h"
++#include "t-head-compat.inc"
+ 
+ 
+ 	.align 3
+diff --git a/platform/thead/c910/t-head-compat.inc b/platform/thead/c910/t-head-compat.inc
+new file mode 100644
+index 0000000..ae731dd
+--- /dev/null
++++ b/platform/thead/c910/t-head-compat.inc
+@@ -0,0 +1,96 @@
++	# Copied from code by Samuel Holland <samuel@sholland.org>
++	# From https://github.com/smaeul/sun20i_d1_spl
++	# drivers/dram/sun20iw1p1/lib-dram/t-head-compat.inc
++
++	.equ	zero, 0
++	.equ	ra, 1
++	.equ	sp, 2
++	.equ	gp, 3
++	.equ	tp, 4
++	.equ	t0, 5
++	.equ	t1, 6
++	.equ	t2, 7
++	.equ	s0, 8
++	.equ	s1, 9
++	.equ	a0, 10
++	.equ	a1, 11
++	.equ	a2, 12
++	.equ	a3, 13
++	.equ	a4, 14
++	.equ	a5, 15
++	.equ	a6, 16
++	.equ	a7, 17
++	.equ	s2, 18
++	.equ	s3, 19
++	.equ	s4, 20
++	.equ	s5, 21
++	.equ	s6, 22
++	.equ	s7, 23
++	.equ	s8, 24
++	.equ	s9, 25
++	.equ	s10, 26
++	.equ	s11, 27
++	.equ	t3, 28
++	.equ	t4, 29
++	.equ	t5, 30
++	.equ	t6, 31
++
++	.macro	extu rd, rs1, imm1, imm2
++	.word	0x0000300b | ((\imm1) << 26) | ((\imm2) << 20) | (\rs1 << 15) | (\rd << 7)
++	.endm
++
++	.macro	ldd rd1, rd2, rs1, imm2, junk
++	.word	0xf800400b | ((\imm2) << 25) | (\rd2 << 20) | (\rs1 << 15) | (\rd1 << 7)
++	.endm
++
++	.macro	lrbu rd, rs1, rs2, imm2
++	.word	0x8000400b | ((\imm2) << 25) | (\rs2 << 20) | (\rs1 << 15) | (\rd << 7)
++	.endm
++
++	.macro	lrw rd, rs1, rs2, imm2
++	.word	0x4000400b | ((\imm2) << 25) | (\rs2 << 20) | (\rs1 << 15) | (\rd << 7)
++	.endm
++
++	.macro	lurw rd, rs1, rs2, imm2
++	.word	0x5000400b | ((\imm2) << 25) | (\rs2 << 20) | (\rs1 << 15) | (\rd << 7)
++	.endm
++
++	.macro	lwd rd1, rd2, rs1, imm2, junk
++	.word	0xe000400b | ((\imm2) << 25) | (\rd2 << 20) | (\rs1 << 15) | (\rd1 << 7)
++	.endm
++
++	.macro	sdd rd1, rd2, rs1, imm2, junk
++	.word	0xf800500b | ((\imm2) << 25) | (\rd2 << 20) | (\rs1 << 15) | (\rd1 << 7)
++	.endm
++
++	.macro	srb rd, rs1, rs2, imm2
++	.word	0x0000500b | ((\imm2) << 25) | (\rs2 << 20) | (\rs1 << 15) | (\rd << 7)
++	.endm
++
++	.macro	srw rd, rs1, rs2, imm2
++	.word	0x4000500b | ((\imm2) << 25) | (\rs2 << 20) | (\rs1 << 15) | (\rd << 7)
++	.endm
++
++	.macro	swia rs2, rs1, imm5, imm2
++	.word	0x5800500b | ((\imm2) << 25) | ((\imm5) << 20) | (\rs1 << 15) | (\rs2 << 7)
++	.endm
++
++	# Additional code by Jookia
++
++	.equ	mxstatus, 0x7c0
++
++	.macro	dcache.call
++	.word	0x0010000b
++	.endm
++
++	.macro	lurbu rd, rs1, rs2, imm2
++	.word	0x9000400b | ((\imm2) << 25) | (\rs2 << 20) | (\rs1 << 15) | (\rd << 7)
++	.endm
++
++	.macro	surw rd, rs1, rs2, imm2
++	.word	0x5000500b | ((\imm2) << 25) | (\rs2 << 20) | (\rs1 << 15) | (\rd << 7)
++	.endm
++
++	.macro	mveqz rd, rs1, rs2
++	.word   0x4000100b | (\rs2 << 20) | (\rs1 << 15) | (\rd << 7)
++	.endm
