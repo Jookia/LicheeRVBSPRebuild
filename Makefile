@@ -23,17 +23,11 @@ $(BLDDIR)/.init:
 	touch $(BLDDIR)/.init
 
 download-kernel $(BLDDIR)/.download-kernel: $(BLDDIR)/.init
-	@set -ex
-	cd $(BLDDIR)
-	git clone "$(KERNELGIT)" linux
-	git -C linux checkout $(KERNELTAG)
+	git clone "$(KERNELGIT)" -b "$(KERNELTAG)" $(BLDDIR)/linux
 	touch $(BLDDIR)/.download-kernel
 
 download-spl $(BLDDIR)/.download-spl: $(BLDDIR)/.init
-	@set -ex
-	cd $(BLDDIR)
-	git clone "$(SPLGIT)" spl
-	git -C spl checkout $(SPLTAG)
+	git clone "$(SPLGIT)" -b "$(SPLTAG)" $(BLDDIR)/spl
 	touch $(BLDDIR)/.download-spl
 
 prepare-kernel $(BLDDIR)/.prepare-kernel: $(BLDDIR)/.download-kernel
