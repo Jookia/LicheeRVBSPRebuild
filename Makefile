@@ -2,7 +2,7 @@
 # SPDX-FileCopyrightText: Copyright 2023 Jookia <contact@jookia.org>
 
 # Change this if you want!
-CROSS_COMPILE=riscv64-linux-gnu-
+CROSS_COMPILE=/usr/bin/riscv64-linux-gnu-
 NPROC=$(shell nproc)
 DTS=$(ATTIC)/dts/board_waft.dts # Used by Sipeed
 
