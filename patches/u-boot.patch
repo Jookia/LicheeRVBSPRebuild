@@ -1,0 +1,107 @@
+diff --git a/Makefile b/Makefile
+index 7a52999..6b4ef5e 100644
+--- a/Makefile
++++ b/Makefile
+@@ -414,7 +414,6 @@ KBUILD_CPPFLAGS := -D__KERNEL__ -D__UBOOT__
+ KBUILD_CFLAGS   := -Wall -Wstrict-prototypes \
+ 		   -Wno-format-security \
+ 		   -fno-builtin -ffreestanding\
+-		   -Werror\
+ 		   -Wno-packed-bitfield-compat
+ KBUILD_CFLAGS	+= -fshort-wchar
+ KBUILD_AFLAGS   := -D__ASSEMBLY__
+@@ -1033,29 +1032,6 @@ TARGET_BIN_DIR ?= device/config/chips/$(TARGET_PLATFORM)/bin
+ 
+ u-boot-$(CONFIG_SYS_CONFIG_NAME).bin:   u-boot.bin
+ 	@cp -v $<    $@
+-ifeq ($(CONFIG_SUNXI_NOR_IMG),y)
+-ifeq ($(TARGET_BUILD_VARIANT),tina)
+-	@cp -v $@ $(objtree)/../../../$(TARGET_BIN_DIR)/u-boot-spinor-$(CONFIG_SYS_CONFIG_NAME).bin;
+-else
+-	@-if [ "x$(LICHEE_BUSSINESS)" != "x" ];then \
+-		cp -v $@ $(LICHEE_CHIP_CONFIG_DIR)/$(LICHEE_BUSSINESS)/bin/u-boot-spinor-$(CONFIG_SYS_CONFIG_NAME).bin; \
+-	else \
+-		cp -v $@ $(LICHEE_CHIP_CONFIG_DIR)/bin/u-boot-spinor-$(CONFIG_SYS_CONFIG_NAME).bin;\
+-	fi
+-	@-cp -v $@ $(LICHEE_PLAT_OUT)/u-boot-spinor-$(CONFIG_SYS_CONFIG_NAME).bin;
+-endif
+-else
+-ifeq ($(TARGET_BUILD_VARIANT),tina)
+-	@cp -v $@ $(objtree)/../../../$(TARGET_BIN_DIR)/$@
+-else
+-	@-if [ "x$(LICHEE_BUSSINESS)" != "x" ];then\
+-		cp -v $@ $(LICHEE_CHIP_CONFIG_DIR)/$(LICHEE_BUSSINESS)/bin/$@; \
+-	else \
+-		cp -v $@ $(LICHEE_CHIP_CONFIG_DIR)/bin/$@; \
+-	fi
+-	@-cp -v $@ $(LICHEE_PLAT_OUT)/$@;
+-endif
+-endif
+ 
+ %.imx: %.bin
+ 	$(Q)$(MAKE) $(build)=arch/arm/mach-imx $@
+diff --git a/arch/riscv/Makefile b/arch/riscv/Makefile
+index 41581f4..51f5d81 100644
+--- a/arch/riscv/Makefile
++++ b/arch/riscv/Makefile
+@@ -24,7 +24,7 @@ ifeq ($(CONFIG_CMODEL_MEDANY),y)
+ 	CMODEL = medany
+ endif
+ 
+-ARCH_FLAGS = -march=$(ARCH_BASE)$(ARCH_A)$(ARCH_C)xthead -mabi=$(ABI) \
++ARCH_FLAGS = -march=$(ARCH_BASE)$(ARCH_A)$(ARCH_C)_zicsr_zifencei -mabi=$(ABI) \
+ 	     -mcmodel=$(CMODEL)
+ 
+ PLATFORM_CPPFLAGS	+= $(ARCH_FLAGS)
+diff --git a/arch/riscv/cpu/c906/cache.c b/arch/riscv/cpu/c906/cache.c
+index ebd2c57..7070afb 100644
+--- a/arch/riscv/cpu/c906/cache.c
++++ b/arch/riscv/cpu/c906/cache.c
+@@ -28,7 +28,7 @@ void invalidate_dcache_range(unsigned long start, unsigned long end)
+ 	register unsigned long i asm("a0") = start & ~(L1_CACHE_BYTES - 1);
+ 
+ 	for (; i < end; i += L1_CACHE_BYTES)
+-		asm volatile ("dcache.ipa a0");
++		asm volatile(".long 0x02a5000b");	/*dcache.ipa a0*/
+ 
+ 	asm volatile (".long 0x01b0000b");
+ 	/* flush_dcache_all(); */
+diff --git a/arch/riscv/cpu/start.S b/arch/riscv/cpu/start.S
+index e416d8b..255f958 100644
+--- a/arch/riscv/cpu/start.S
++++ b/arch/riscv/cpu/start.S
+@@ -32,6 +32,8 @@
+ #define SYM_SIZE		0x18
+ #endif
+ 
++#define sxstatus 0x5c0
++
+ .macro get_riscv_mode
+ 	csrr    a5, sxstatus
+ 	srli    a5, a5, 0x1e
+diff --git a/arch/riscv/include/asm/csr.h b/arch/riscv/include/asm/csr.h
+index 5cab422..83f5113 100644
+--- a/arch/riscv/include/asm/csr.h
++++ b/arch/riscv/include/asm/csr.h
+@@ -169,6 +169,8 @@
+ })
+ 
+ 
++#define sxstatus 0x5c0
++
+ static inline unsigned long get_cur_riscv_mode(void)
+ {
+ 	return (csr_read(sxstatus) >> 30) & 0x3;
+diff --git a/arch/riscv/lib/interrupts.c b/arch/riscv/lib/interrupts.c
+index 3b93627..342bfa2 100644
+--- a/arch/riscv/lib/interrupts.c
++++ b/arch/riscv/lib/interrupts.c
+@@ -74,6 +74,8 @@ static void _exit_trap(ulong code, ulong epc, ulong tval, struct pt_regs *regs)
+ 	hang();
+ }
+ 
++#define sxstatus 0x5c0
++
+ int interrupt_init(void)
+ {
+ 	u32 cur_riscv_mode = get_cur_riscv_mode();
