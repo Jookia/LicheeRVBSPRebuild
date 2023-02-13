@@ -4,6 +4,7 @@
 # Change this if you want!
 CROSS_COMPILE=/usr/bin/riscv64-linux-gnu-
 NPROC=$(shell nproc)
+DTS=$(PWD)/attic/dts/board_waft.dts
 
 BLDDIR=$(PWD)/build
 ATTIC=$(PWD)/attic
@@ -132,17 +133,12 @@ build-mkimage $(BLDDIR)/.build-mkimage: $(BLDDIR)/.prepare-mkimage
 
 build-dtb $(BLDDIR)/.build-dtb: $(BLDDIR)/.build-linux
 	@set -e
-	rm -rf $(BLDDIR)/dtb
-	mkdir -p $(BLDDIR)/dtb
 	cd $(BLDDIR)/linux
 	DTSDIR=arch/riscv/boot/dts/sunxi/
-	git clean -f $$DTSDIR/*.dts
-	echo '' > $$DTSDIR/Makefile
-	for i in $(ATTIC)/dts/*.dts; do
-		NAME="$$(basename $$i .dts)"
-		cp $$i $$DTSDIR/$$NAME.dts
-		echo "dtb-y += $$NAME.dtb" >> $$DTSDIR/Makefile
-	done
+	rm -rf $$DTSDIR/mydts.dts $$DTSDIR/mydts.dtb
+	echo 'dtb-y += mydts.dtb' > $$DTSDIR/Makefile
+	cp $(DTS) $$DTSDIR/mydts.dts
+	make ARCH=riscv dtbs
 	touch $(BLDDIR)/.build-dtb
 
 build-toc $(BLDDIR)/.build-toc: $(BLDDIR)/.build-mkimage $(BLDDIR)/.build-opensbi $(BLDDIR)/.build-dtb $(BLDDIR)/.build-u-boot
@@ -154,7 +150,7 @@ build-toc $(BLDDIR)/.build-toc: $(BLDDIR)/.build-mkimage $(BLDDIR)/.build-opensb
 	file = opensbi/build/platform/thead/c910/firmware/fw_dynamic.bin
 	addr = 0x40000000
 	[dtb]
-	file = linux/arch/riscv/boot/dts/sunxi/board_waft.dtb
+	file = linux/arch/riscv/boot/dts/sunxi/mydts.dtb
 	addr = 0x44000000
 	[u-boot]
 	file = u-boot/u-boot-nodtb.bin
