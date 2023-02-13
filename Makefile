@@ -17,6 +17,8 @@ OPENSBIGIT=https://dl.linux-sunxi.org/D1/SDK/projects/lichee/brandy-2.0/opensbi.
 OPENSBICOMMIT=c50b19bc79b2cc5bf70089d61fadc7f86fcac4b1# product-smartx-d1-tina-v1.0-release
 UBOOTGIT=https://dl.linux-sunxi.org/D1/SDK/projects/lichee/brandy-2.0/u-boot-2018.git
 UBOOTCOMMIT=0a88ac94ab4c4c7942423d3b447e6a147fae7fbd# smartx-d1-tina-v1.0.1-release
+MKIMAGEGIT=https://github.com/smaeul/u-boot
+MKIMAGECOMMIT=329e94f16ff84f9cf9341f8dfdff7af1b1e6ee9a# d1-2022-10-31
 
 .ONESHELL:
 SHELL=/usr/bin/bash
@@ -40,6 +42,10 @@ download-opensbi $(BLDDIR)/.download-opensbi: $(BLDDIR)/.init
 download-u-boot $(BLDDIR)/.download-u-boot: $(BLDDIR)/.init
 	git clone "$(UBOOTGIT)" $(BLDDIR)/u-boot
 	touch $(BLDDIR)/.download-u-boot
+
+download-mkimage $(BLDDIR)/.download-mkimage: $(BLDDIR)/.init
+	git clone "$(MKIMAGEGIT)" $(BLDDIR)/mkimage
+	touch $(BLDDIR)/.download-mkimage
 
 prepare-linux $(BLDDIR)/.prepare-linux: $(BLDDIR)/.download-linux
 	@set -ex
@@ -78,6 +84,13 @@ prepare-u-boot $(BLDDIR)/.prepare-u-boot: $(BLDDIR)/.download-u-boot
 	make ARCH=riscv CROSS_COMPILE=$(CROSS_COMPILE) olddefconfig
 	touch $(BLDDIR)/.prepare-u-boot
 
+prepare-mkimage $(BLDDIR)/.prepare-mkimage: $(BLDDIR)/.download-mkimage
+	@set -ex
+	cd $(BLDDIR)/mkimage
+	git switch --discard-changes --detach "$(MKIMAGECOMMIT)"
+	git clean -dfx
+	touch $(BLDDIR)/.prepare-mkimage
+
 build-linux $(BLDDIR)/.build-linux: $(BLDDIR)/.prepare-linux
 	@set -ex
 	cd $(BLDDIR)/linux
@@ -110,21 +123,30 @@ build-u-boot $(BLDDIR)/.build-u-boot: $(BLDDIR)/.prepare-u-boot
 	make ARCH=riscv CROSS_COMPILE=$(CROSS_COMPILE) -j$(NPROC)
 	touch $(BLDDIR)/.build-u-boot
 
+build-mkimage $(BLDDIR)/.build-mkimage: $(BLDDIR)/.prepare-mkimage
+	@set -ex
+	cd $(BLDDIR)/mkimage
+	make sandbox_config
+	make tools
+	touch $(BLDDIR)/.build-mkimage
+
 clean-prepare:
 	rm -rf $(BLDDIR)/.prepare-linux
 	rm -rf $(BLDDIR)/.prepare-spl
 	rm -rf $(BLDDIR)/.prepare-opensbi
 	rm -rf $(BLDDIR)/.prepare-u-boot
+	rm -rf $(BLDDIR)/.prepare-mkimage
 
 clean-build:
 	rm -rf $(BLDDIR)/.build-linux
 	rm -rf $(BLDDIR)/.build-spl
 	rm -rf $(BLDDIR)/.build-opensbi
 	rm -rf $(BLDDIR)/.build-u-boot
+	rm -rf $(BLDDIR)/.build-mkimage
 	rm -rf $(BLDDIR)/Image
 	rm -rf $(BLDDIR)/lib
 
-prepare: $(BLDDIR)/.prepare-linux $(BLDDIR)/.prepare-spl $(BLDDIR)/.prepare-opensbi $(BLDDIR)/.prepare-u-boot
-build: $(BLDDIR)/.build-linux $(BLDDIR)/.build-spl $(BLDDIR)/.build-opensbi $(BLDDIR)/.build-u-boot
+prepare: $(BLDDIR)/.prepare-linux $(BLDDIR)/.prepare-spl $(BLDDIR)/.prepare-opensbi $(BLDDIR)/.prepare-u-boot $(BLDDIR)/.prepare-mkimage
+build: $(BLDDIR)/.build-linux $(BLDDIR)/.build-spl $(BLDDIR)/.build-opensbi $(BLDDIR)/.build-u-boot $(BLDDIR)/.build-mkimage
 rebuild: clean-build build
 reprepare: clean-build clean-prepare prepare
