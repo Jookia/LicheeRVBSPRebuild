@@ -178,7 +178,7 @@ clean-build:
 	rm -rf $(BLDDIR)/Image
 	rm -rf $(BLDDIR)/lib
 
-prepare: $(BLDDIR)/.prepare-linux
+prepare: $(BLDDIR)/.prepare-linux $(BLDDIR)/.prepare-spl $(BLDDIR)/.prepare-opensbi $(BLDDIR)/.prepare-u-boot $(BLDDIR)/.prepare-mkimage
 build: $(BLDDIR)/.build-linux $(BLDDIR)/.build-spl $(BLDDIR)/.build-toc
 rebuild: clean-build build
 reprepare: clean-build clean-prepare prepare
