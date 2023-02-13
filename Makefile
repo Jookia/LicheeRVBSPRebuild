@@ -145,6 +145,25 @@ build-dtb $(BLDDIR)/.build-dtb: $(BLDDIR)/.build-linux
 	done
 	touch $(BLDDIR)/.build-dtb
 
+build-toc $(BLDDIR)/.build-toc: $(BLDDIR)/.build-mkimage $(BLDDIR)/.build-opensbi $(BLDDIR)/.build-dtb $(BLDDIR)/.build-u-boot
+	@set -ex
+	cd $(BLDDIR)
+	rm -rf toc toc.fg
+	cat <<-EOF >toc.cfg
+	[opensbi]
+	file = opensbi/build/platform/thead/c910/firmware/fw_dynamic.bin
+	addr = 0x40000000
+	[dtb]
+	file = linux/arch/riscv/boot/dts/sunxi/board_waft.dtb
+	addr = 0x44000000
+	[u-boot]
+	file = u-boot/u-boot-nodtb.bin
+	addr = 0x4a000000
+	EOF
+	mkimage/tools/mkimage -T sunxi_toc1 -d toc.cfg toc
+	rm toc.cfg
+	touch $(BLDDIR)/.build-toc
+
 clean-prepare:
 	rm -rf $(BLDDIR)/.prepare-linux
 	rm -rf $(BLDDIR)/.prepare-spl
@@ -159,10 +178,11 @@ clean-build:
 	rm -rf $(BLDDIR)/.build-u-boot
 	rm -rf $(BLDDIR)/.build-mkimage
 	rm -rf $(BLDDIR)/.build-dtb
+	rm -rf $(BLDDIR)/.build-toc
 	rm -rf $(BLDDIR)/Image
 	rm -rf $(BLDDIR)/lib
 
-prepare: $(BLDDIR)/.prepare-linux $(BLDDIR)/.prepare-spl $(BLDDIR)/.prepare-opensbi $(BLDDIR)/.prepare-u-boot $(BLDDIR)/.prepare-mkimage
-build: $(BLDDIR)/.build-linux $(BLDDIR)/.build-spl $(BLDDIR)/.build-opensbi $(BLDDIR)/.build-u-boot $(BLDDIR)/.build-mkimage $(BLDDIR)/.build-dtb
+prepare: $(BLDDIR)/.prepare-linux
+build: $(BLDDIR)/.build-linux $(BLDDIR)/.build-spl $(BLDDIR)/.build-toc
 rebuild: clean-build build
 reprepare: clean-build clean-prepare prepare
