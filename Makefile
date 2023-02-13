@@ -85,6 +85,7 @@ build-linux $(BLDDIR)/.build-linux: $(BLDDIR)/.prepare-linux
 	export CROSS_COMPILE=$(CROSS_COMPILE)
 	make -j$(NPROC)
 	make -j$(NPROC) modules
+	rm -rf $(BLDDIR)/lib/modules
 	make -j$(NPROC) modules_install INSTALL_MOD_PATH=$(BLDDIR)
 	cp arch/riscv/boot/Image $(BLDDIR)/Image
 	touch $(BLDDIR)/.build-linux
