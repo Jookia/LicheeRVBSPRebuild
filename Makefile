@@ -132,7 +132,7 @@ build-mkimage $(BLDDIR)/.build-mkimage: $(BLDDIR)/.prepare-mkimage
 	touch $(BLDDIR)/.build-mkimage
 
 build-dtb $(BLDDIR)/.build-dtb: $(BLDDIR)/.build-linux
-	@set -e
+	@set -ex
 	cd $(BLDDIR)/linux
 	DTSDIR=arch/riscv/boot/dts/sunxi/
 	rm -rf $$DTSDIR/mydts.dts $$DTSDIR/mydts.dtb
