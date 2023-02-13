@@ -20,6 +20,8 @@ UBOOTGIT=https://dl.linux-sunxi.org/D1/SDK/projects/lichee/brandy-2.0/u-boot-201
 UBOOTCOMMIT=0a88ac94ab4c4c7942423d3b447e6a147fae7fbd# smartx-d1-tina-v1.0.1-release
 MKIMAGEGIT=https://github.com/smaeul/u-boot
 MKIMAGECOMMIT=329e94f16ff84f9cf9341f8dfdff7af1b1e6ee9a# d1-2022-10-31
+FIRMWAREGIT=https://dl.linux-sunxi.org/D1/SDK/projects/package.git
+FIRMWARECOMMIT=18a2da8d2e82f2f28a81d149061547c0a04d0422# smartx-d1-tina-v1.0.1-release
 
 .ONESHELL:
 SHELL=/usr/bin/bash
@@ -47,6 +49,10 @@ download-u-boot $(BLDDIR)/.download-u-boot: $(BLDDIR)/.init
 download-mkimage $(BLDDIR)/.download-mkimage: $(BLDDIR)/.init
 	git clone "$(MKIMAGEGIT)" $(BLDDIR)/mkimage
 	touch $(BLDDIR)/.download-mkimage
+
+download-firmware $(BLDDIR)/.download-firmware: $(BLDDIR)/.init
+	git clone "$(FIRMWAREGIT)" $(BLDDIR)/firmware
+	touch $(BLDDIR)/.download-firmware
 
 prepare-linux $(BLDDIR)/.prepare-linux: $(BLDDIR)/.download-linux
 	@set -ex
@@ -91,6 +97,13 @@ prepare-mkimage $(BLDDIR)/.prepare-mkimage: $(BLDDIR)/.download-mkimage
 	git switch --discard-changes --detach "$(MKIMAGECOMMIT)"
 	git clean -dfx
 	touch $(BLDDIR)/.prepare-mkimage
+
+prepare-firmware $(BLDDIR)/.prepare-firmware: $(BLDDIR)/.download-firmware
+	@set -ex
+	cd $(BLDDIR)/firmware
+	git switch --discard-changes --detach "$(FIRMWARECOMMIT)"
+	git clean -dfx
+	touch $(BLDDIR)/.prepare-firmware
 
 build-linux $(BLDDIR)/.build-linux: $(BLDDIR)/.prepare-linux
 	@set -ex
@@ -160,12 +173,21 @@ build-toc $(BLDDIR)/.build-toc: $(BLDDIR)/.build-mkimage $(BLDDIR)/.build-opensb
 	rm toc.cfg
 	touch $(BLDDIR)/.build-toc
 
+build-firmware $(BLDDIR)/.build-firmware: $(BLDDIR)/.prepare-firmware
+	@set -ex
+	cd $(BLDDIR)
+	rm -rf lib/firmware
+	mkdir -p lib/firmware
+	cp -r firmware/firmware/linux-firmware/xr829/*.bin lib/firmware
+	touch $(BLDDIR)/.build-firmware
+
 clean-prepare:
 	rm -rf $(BLDDIR)/.prepare-linux
 	rm -rf $(BLDDIR)/.prepare-spl
 	rm -rf $(BLDDIR)/.prepare-opensbi
 	rm -rf $(BLDDIR)/.prepare-u-boot
 	rm -rf $(BLDDIR)/.prepare-mkimage
+	rm -rf $(BLDDIR)/.prepare-firmware
 
 clean-build:
 	rm -rf $(BLDDIR)/.build-linux
@@ -175,10 +197,11 @@ clean-build:
 	rm -rf $(BLDDIR)/.build-mkimage
 	rm -rf $(BLDDIR)/.build-dtb
 	rm -rf $(BLDDIR)/.build-toc
+	rm -rf $(BLDDIR)/.build-firmware
 	rm -rf $(BLDDIR)/Image
 	rm -rf $(BLDDIR)/lib
 
-prepare: $(BLDDIR)/.prepare-linux $(BLDDIR)/.prepare-spl $(BLDDIR)/.prepare-opensbi $(BLDDIR)/.prepare-u-boot $(BLDDIR)/.prepare-mkimage
-build: $(BLDDIR)/.build-linux $(BLDDIR)/.build-spl $(BLDDIR)/.build-toc
+prepare: $(BLDDIR)/.prepare-linux $(BLDDIR)/.prepare-spl $(BLDDIR)/.prepare-opensbi $(BLDDIR)/.prepare-u-boot $(BLDDIR)/.prepare-mkimage $(BLDDIR)/.prepare-firmware
+build: $(BLDDIR)/.build-linux $(BLDDIR)/.build-spl $(BLDDIR)/.build-toc $(BLDDIR)/.build-firmware
 rebuild: clean-build build
 reprepare: clean-build clean-prepare prepare
