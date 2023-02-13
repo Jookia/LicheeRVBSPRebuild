@@ -130,6 +130,21 @@ build-mkimage $(BLDDIR)/.build-mkimage: $(BLDDIR)/.prepare-mkimage
 	make tools
 	touch $(BLDDIR)/.build-mkimage
 
+build-dtb $(BLDDIR)/.build-dtb: $(BLDDIR)/.build-linux
+	@set -e
+	rm -rf $(BLDDIR)/dtb
+	mkdir -p $(BLDDIR)/dtb
+	cd $(BLDDIR)/linux
+	DTSDIR=arch/riscv/boot/dts/sunxi/
+	git clean -f $$DTSDIR/*.dts
+	echo '' > $$DTSDIR/Makefile
+	for i in $(ATTIC)/dts/*.dts; do
+		NAME="$$(basename $$i .dts)"
+		cp $$i $$DTSDIR/$$NAME.dts
+		echo "dtb-y += $$NAME.dtb" >> $$DTSDIR/Makefile
+	done
+	touch $(BLDDIR)/.build-dtb
+
 clean-prepare:
 	rm -rf $(BLDDIR)/.prepare-linux
 	rm -rf $(BLDDIR)/.prepare-spl
@@ -143,10 +158,11 @@ clean-build:
 	rm -rf $(BLDDIR)/.build-opensbi
 	rm -rf $(BLDDIR)/.build-u-boot
 	rm -rf $(BLDDIR)/.build-mkimage
+	rm -rf $(BLDDIR)/.build-dtb
 	rm -rf $(BLDDIR)/Image
 	rm -rf $(BLDDIR)/lib
 
 prepare: $(BLDDIR)/.prepare-linux $(BLDDIR)/.prepare-spl $(BLDDIR)/.prepare-opensbi $(BLDDIR)/.prepare-u-boot $(BLDDIR)/.prepare-mkimage
-build: $(BLDDIR)/.build-linux $(BLDDIR)/.build-spl $(BLDDIR)/.build-opensbi $(BLDDIR)/.build-u-boot $(BLDDIR)/.build-mkimage
+build: $(BLDDIR)/.build-linux $(BLDDIR)/.build-spl $(BLDDIR)/.build-opensbi $(BLDDIR)/.build-u-boot $(BLDDIR)/.build-mkimage $(BLDDIR)/.build-dtb
 rebuild: clean-build build
 reprepare: clean-build clean-prepare prepare
