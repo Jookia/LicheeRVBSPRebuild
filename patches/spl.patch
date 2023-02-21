@@ -1,0 +1,218 @@
+commit 6218d8ca032f69c0ae6fe855352656857f59da65
+Author: Jookia <contact@jookia.org>
+Date:   2023-02-17 07:34:06 +1100
+
+    Revert "Do not modify images after loading them"
+    
+    This reverts commit 071b9ddcf562ea6a905ff6166ad7cfbf76804901.
+
+diff --git a/nboot/main/boot0_main.c b/nboot/main/boot0_main.c
+index 2fb411a..2f31ae6 100644
+--- a/nboot/main/boot0_main.c
++++ b/nboot/main/boot0_main.c
+@@ -18,6 +18,9 @@
+ #include <arch/efuse.h>
+ #endif
+ 
++static void update_uboot_info(phys_addr_t uboot_base, phys_addr_t optee_base,
++		phys_addr_t monitor_base, phys_addr_t rtos_base, u32 dram_size,
++		u16 pmu_type, u16 uart_input, u16 key_input);
+ static int boot0_clear_env(void);
+ 
+ void main(void)
+@@ -26,6 +29,7 @@ void main(void)
+ 	int status;
+ 	phys_addr_t  uboot_base = 0, optee_base = 0, monitor_base = 0, \
+ 				rtos_base = 0, opensbi_base = 0, dtb_base = 0;
++	u16 pmu_type = 0, key_input = 0; /* TODO: set real value */
+ 
+ 	sunxi_serial_init(BT0_head.prvt_head.uart_port, (void *)BT0_head.prvt_head.uart_ctrl, 6);
+ 	printf("HELLO! BOOT0 is starting!\n");
+@@ -116,6 +120,8 @@ void main(void)
+ 			goto _BOOT_ERROR;
+ 	}
+ 
++	update_uboot_info(uboot_base, optee_base, monitor_base, rtos_base, dram_size,
++			pmu_type, uart_input_value, key_input);
+ 	mmu_disable( );
+ 
+ 	printf("Jump to second Boot.\n");
+@@ -143,6 +149,35 @@ _BOOT_ERROR:
+ 
+ }
+ 
++static void update_uboot_info(phys_addr_t uboot_base, phys_addr_t optee_base,
++		phys_addr_t monitor_base, phys_addr_t rtos_base, u32 dram_size,
++		u16 pmu_type, u16 uart_input, u16 key_input)
++{
++	if (rtos_base)
++		return;
++
++	uboot_head_t  *header = (uboot_head_t *) uboot_base;
++	struct sbrom_toc1_head_info *toc1_head = (struct sbrom_toc1_head_info *)CONFIG_BOOTPKG_BASE;
++
++	header->boot_data.boot_package_size = toc1_head->valid_len;
++	header->boot_data.dram_scan_size = dram_size;
++	memcpy((void *)header->boot_data.dram_para, &BT0_head.prvt_head.dram_para, 32 * sizeof(int));
++
++	if(monitor_base)
++		header->boot_data.monitor_exist = 1;
++	if(optee_base)
++		header->boot_data.secureos_exist = 1;
++#ifndef CONFIG_RISCV
++	header->boot_data.func_mask |= get_uboot_func_mask(UBOOT_FUNC_MASK_ALL);
++#endif
++	update_flash_para(uboot_base);
++
++	header->boot_data.pmu_type = pmu_type;
++	header->boot_data.uart_input = uart_input;
++	header->boot_data.key_input = key_input;
++	header->boot_data.debug_mode = sunxi_get_printf_debug_mode();
++}
++
+ static int boot0_clear_env(void)
+ {
+ 	sunxi_board_exit();
+diff --git a/nboot/main/load_image.c b/nboot/main/load_image.c
+index 759a36f..4a724ad 100644
+--- a/nboot/main/load_image.c
++++ b/nboot/main/load_image.c
+@@ -80,20 +80,133 @@ int load_image(phys_addr_t *uboot_base, phys_addr_t *optee_base, \
+ #endif
+ 
+ 		image_base = toc1_item->run_addr;
+-		if (strncmp(toc1_item->name, ITEM_UBOOT_NAME, sizeof(ITEM_UBOOT_NAME)) == 0) {
++		if(strncmp(toc1_item->name, ITEM_UBOOT_NAME, sizeof(ITEM_UBOOT_NAME)) == 0) {
+ 			*uboot_base = image_base;
+-		} else if (strncmp(toc1_item->name, ITEM_OPTEE_NAME, sizeof(ITEM_OPTEE_NAME)) == 0) {
++			toc1_flash_read(toc1_item->data_offset/512, (toc1_item->data_len+511)/512, (void *)image_base);
++		}
++		else if (strncmp(toc1_item->name, ITEM_OPTEE_NAME, sizeof(ITEM_OPTEE_NAME)) == 0) {
+ 			*optee_base = image_base;
+-		} else if (strncmp(toc1_item->name, ITEM_MONITOR_NAME, sizeof(ITEM_MONITOR_NAME)) == 0) {
++			toc1_flash_read(toc1_item->data_offset/512, (toc1_item->data_len+511)/512, (void *)image_base);
++			struct spare_optee_head *tee_head = (struct spare_optee_head *)image_base;
++			memcpy(tee_head->dram_para, BT0_head.prvt_head.dram_para, 32*sizeof(int));
++			memcpy(tee_head->chipinfo, &BT0_head.prvt_head.jtag_gpio[4], 8);
++		}
++		else if(strncmp(toc1_item->name, ITEM_MONITOR_NAME, sizeof(ITEM_MONITOR_NAME)) == 0) {
+ 			*monitor_base = image_base;
++			toc1_flash_read(toc1_item->data_offset/512, (toc1_item->data_len+511)/512, (void *)image_base);
++			struct private_atf_head *atf_head = (struct private_atf_head *)image_base;
++			memcpy(atf_head->dram_para, BT0_head.prvt_head.dram_para, 32 * sizeof(int));
++			memcpy(atf_head->platform, &BT0_head.prvt_head.jtag_gpio[4], 8);
++		}
++		else if(strncmp(toc1_item->name, ITEM_SCP_NAME, sizeof(ITEM_SCP_NAME)) == 0) {
++#ifdef SCP_SRAM_BASE
++#ifdef SCP_DTS_BASE
++			struct sbrom_toc1_item_info  *toc1_item_scp_dts = item_head;
++			int scp_j;
++			for (scp_j = 0; scp_j < toc1_head->items_nr; scp_j++, toc1_item_scp_dts++) {
++				if (strncmp(toc1_item_scp_dts->name, ITEM_DTB_NAME, sizeof(ITEM_DTB_NAME)) == 0) {
++					if (toc1_item_scp_dts->data_len > SCP_DTS_SIZE) {
++						printf("error: dtb size larger than scp dts size\n");
++					} else {
++						toc1_flash_read(toc1_item_scp_dts->data_offset/512, (toc1_item_scp_dts->data_len+511)/512, (void *)SCP_DTS_BASE);
++					}
++					break;
++				}
++			}
++			if (scp_j == toc1_head->items_nr)
++				printf("error: dtb not found for scp\n");
++#endif
++#ifdef SCP_DEASSERT_BY_MONITOR
++			toc1_flash_read(toc1_item->data_offset / 512,
++					(SCP_SRAM_SIZE + SCP_DRAM_SIZE + 511) / 512,
++					(void *)SCP_TEMP_STORE_BASE);
++#else
++			toc1_flash_read(toc1_item->data_offset / 512,
++					(SCP_SRAM_SIZE + 511) / 512,
++					(void *)SCP_SRAM_BASE);
++			toc1_flash_read((toc1_item->data_offset +
++					 SCP_CODE_DRAM_OFFSET) /
++						512,
++					(SCP_DRAM_SIZE + 511) / 512,
++					(void *)SCP_DRAM_BASE);
++			memcpy((void *)(SCP_SRAM_BASE + HEADER_OFFSET +
++					SCP_DRAM_PARA_OFFSET),
++			       dram_para_addr, SCP_DARM_PARA_NUM * sizeof(int));
++			sunxi_deassert_arisc();
++#endif
++#endif
++		}
++		else if(strncmp(toc1_item->name, ITEM_DTB_NAME, sizeof(ITEM_DTB_NAME)) == 0) {
++			struct private_atf_head *atf_head = (struct private_atf_head *)(sunxi_get_iobase(*monitor_base));
++			atf_head->dtb_base = image_base;
++			toc1_flash_read(toc1_item->data_offset/512, (toc1_item->data_len+511)/512, (void *)image_base);
++		} else if (strncmp(toc1_item->name, ITEM_DTBO_NAME, sizeof(ITEM_DTBO_NAME)) == 0) {
++			toc1_flash_read(toc1_item->data_offset/512, (toc1_item->data_len+511)/512, (void *)image_base);
++		} else if (strncmp(toc1_item->name, ITEM_LOGO_NAME,
++				   sizeof(ITEM_LOGO_NAME)) == 0) {
++			*(uint *)(image_base) = toc1_item->data_len;
++			toc1_flash_read(toc1_item->data_offset / 512,
++					(toc1_item->data_len + 511) / 512,
++					(void *)(image_base + 16));
++			set_uboot_func_mask(UBOOT_FUNC_MASK_BIT_BOOTLOGO);
+ 		} else if (strncmp(toc1_item->name, ITEM_OPENSBI_NAME, sizeof(ITEM_OPENSBI_NAME)) == 0) {
+ 			*opensbi_base = image_base;
+-		} else if (strncmp(toc1_item->name, ITEM_RTOS_NAME, sizeof(ITEM_RTOS_NAME)) == 0) {
++			toc1_flash_read(toc1_item->data_offset/512, (toc1_item->data_len+511)/512, (void *)image_base);
++		} else if (strncmp(toc1_item->name, ITEM_RTOS_NAME, sizeof(ITEM_RTOS_NAME)) == 0 ||
++			strncmp(toc1_item->name, ITEM_MELIS_NAME, sizeof(ITEM_MELIS_NAME)) == 0) {
+ 			*rtos_base = image_base;
++			toc1_flash_read(toc1_item->data_offset/512, (toc1_item->data_len+511)/512, (void *)image_base);
++		} else if (strncmp(toc1_item->name, ITEM_MELIS_CONFIG_NAME, sizeof(ITEM_MELIS_CONFIG_NAME)) == 0) {
++			memcpy((void *)image_base, &toc1_item->data_len, sizeof(toc1_item->data_len));
++			toc1_flash_read(toc1_item->data_offset/512, (toc1_item->data_len+511)/512, (void *)image_base + 512);
+ 		} else if (strncmp(toc1_item->name, ITEM_DTB_NAME, sizeof(ITEM_DTB_NAME)) == 0) {
+ 			*dtb_base = image_base;
+ 		}
+-		toc1_flash_read(toc1_item->data_offset/512, (toc1_item->data_len+511)/512, (void *)image_base);
++#ifdef CFG_SUNXI_GUNZIP
++		else if ((strncmp(toc1_item->name, ITEM_MELIS_GZ_NAME, sizeof(ITEM_MELIS_GZ_NAME)) == 0)) {
++			*rtos_base = image_base;
++			void *dst = (void *)image_base;
++			int dstlen = *(unsigned long *)((unsigned char *)CONFIG_BOOTPKG_BASE + toc1_item->data_offset + toc1_item->data_len - 4);
++			unsigned char *src = (unsigned char *)(CONFIG_BOOTPKG_BASE) + toc1_item->data_offset;
++			unsigned long srclen = toc1_item->data_len;
++			unsigned long *lenp = &srclen;
++			int ret = gunzip(dst, dstlen, src, lenp);
++			if (ret) {
++				printf("Error: gunzip returned %d\n", ret);
++				return -1;
++			}
++		}
++#endif
++#ifdef CFG_SUNXI_LZ4
++		else if ((strncmp(toc1_item->name, ITEM_MELIS_LZ4_NAME, sizeof(ITEM_MELIS_LZ4_NAME)) == 0)) {
++			*rtos_base = image_base;
++			void *dst = (void *)image_base;
++			unsigned int dstlen = 0x800000;
++			unsigned char *src = (unsigned char *)(CONFIG_BOOTPKG_BASE) + toc1_item->data_offset;
++			unsigned long srclen = toc1_item->data_len;
++			int ret = ulz4fn(src, srclen, dst, (size_t *)&dstlen);
++			if (ret) {
++				printf("Error: ulz4fn returned %d\n", ret);
++				return -1;
++			}
++
++		}
++#endif
++#ifdef CFG_SUNXI_LZMA
++		else if (strncmp(toc1_item->name, ITEM_MELIS_LZMA_NAME, sizeof(ITEM_MELIS_LZMA_NAME)) == 0) {
++			*rtos_base = image_base;
++			size_t src_len = ~0U, dst_len = ~0U;
++			void *dst = (void *)image_base;
++			unsigned char *src = (unsigned char *)(CONFIG_BOOTPKG_BASE) + toc1_item->data_offset;
++			int ret = lzmaBuffToBuffDecompress(dst, &src_len, src, dst_len);
++			if (ret) {
++				printf("Error: lzmaBuffToBuffDecompress returned %d\n", ret);
++				return -1;
++			}
++
++		}
++#endif
++
+ 	}
+ 
+ 	return 0;

@@ -70,6 +70,7 @@ prepare-spl $(BLDDIR)/.prepare-spl: $(BLDDIR)/.download-spl
 	cd $(BLDDIR)/spl
 	git switch --discard-changes --detach "$(SPLCOMMIT)"
 	git clean -dfx
+	patch -p1 < $(PATCHES)/spl.patch
 	touch $(BLDDIR)/.prepare-spl
 
 prepare-opensbi $(BLDDIR)/.prepare-opensbi: $(BLDDIR)/.download-opensbi
