@@ -88,6 +88,7 @@ prepare-u-boot $(BLDDIR)/.prepare-u-boot: $(BLDDIR)/.download-u-boot
 	patch -p1 < $(ATTIC)/u-boot-tina-diff.patch
 	patch -p1 < $(PATCHES)/u-boot.patch
 	cp $(ATTIC)/u-boot-tina.config .config
+	echo 'CONFIG_SYS_TEXT_BASE=0x45000000' >> .config
 	make ARCH=riscv CROSS_COMPILE=$(CROSS_COMPILE) olddefconfig
 	touch $(BLDDIR)/.prepare-u-boot
 
@@ -162,12 +163,9 @@ build-toc $(BLDDIR)/.build-toc: $(BLDDIR)/.build-mkimage $(BLDDIR)/.build-opensb
 	[opensbi]
 	file = opensbi/build/platform/thead/c910/firmware/fw_dynamic.bin
 	addr = 0x40000000
-	[dtb]
-	file = linux/arch/riscv/boot/dts/sunxi/mydts.dtb
-	addr = 0x44000000
 	[u-boot]
-	file = u-boot/u-boot-nodtb.bin
-	addr = 0x4a000000
+	file = u-boot/u-boot.bin
+	addr = 0x45000000
 	EOF
 	mkimage/tools/mkimage -T sunxi_toc1 -d toc.cfg toc
 	rm toc.cfg
