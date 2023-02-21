@@ -87,6 +87,7 @@ prepare-u-boot $(BLDDIR)/.prepare-u-boot: $(BLDDIR)/.download-u-boot
 	git switch --discard-changes --detach "$(UBOOTCOMMIT)"
 	patch -p1 < $(ATTIC)/u-boot-tina-diff.patch
 	patch -p1 < $(PATCHES)/u-boot.patch
+	cp $(ATTIC)/dts/uboot-board.dts arch/riscv/dts/.board-uboot.dts
 	cp $(ATTIC)/u-boot-tina.config .config
 	echo 'CONFIG_SYS_TEXT_BASE=0x40100000' >> .config
 	make ARCH=riscv CROSS_COMPILE=$(CROSS_COMPILE) olddefconfig
