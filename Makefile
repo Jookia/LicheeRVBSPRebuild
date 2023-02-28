@@ -117,7 +117,6 @@ build-linux $(BLDDIR)/.build-linux: $(BLDDIR)/.prepare-linux
 	make -j$(NPROC) modules
 	rm -rf $(BLDDIR)/lib/modules
 	make -j$(NPROC) modules_install INSTALL_MOD_PATH=$(BLDDIR)
-	cp arch/riscv/boot/Image $(BLDDIR)/Image
 	touch $(BLDDIR)/.build-linux
 
 build-spl $(BLDDIR)/.build-spl: $(BLDDIR)/.prepare-spl
@@ -198,7 +197,6 @@ clean-build:
 	rm -rf $(BLDDIR)/.build-dtb
 	rm -rf $(BLDDIR)/.build-toc
 	rm -rf $(BLDDIR)/.build-firmware
-	rm -rf $(BLDDIR)/Image
 	rm -rf $(BLDDIR)/lib
 
 prepare: $(BLDDIR)/.prepare-linux $(BLDDIR)/.prepare-spl $(BLDDIR)/.prepare-opensbi $(BLDDIR)/.prepare-u-boot $(BLDDIR)/.prepare-mkimage $(BLDDIR)/.prepare-firmware
