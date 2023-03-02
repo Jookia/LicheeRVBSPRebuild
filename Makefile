@@ -5,6 +5,7 @@
 CROSS_COMPILE=/usr/bin/riscv64-linux-gnu-
 NPROC=$(shell nproc)
 DTS=$(PWD)/attic/dts/board_waft.dts
+ENV=$(PWD)/extra/u-boot.env
 
 BLDDIR=$(PWD)/build
 ATTIC=$(PWD)/attic
@@ -196,7 +197,7 @@ build-uimage $(BLDDIR)/.build-uimage: $(BLDDIR)/.build-linux $(BLDDIR)/.build-u-
 build-uenv $(BLDDIR)/.build-uenv: $(BLDDIR)/.build-u-boot
 	@set -ex
 	cd $(BLDDIR)
-	u-boot/tools/mkenvimage -r -s 0x20000 -o uEnv $(ATTIC)/u-boot-tina.env
+	u-boot/tools/mkenvimage -r -s 0x20000 -o uEnv $(ENV)
 	touch $(BLDDIR)/.build-uenv
 
 clean-prepare:
