@@ -66,6 +66,7 @@ prepare-linux $(BLDDIR)/.prepare-linux: $(BLDDIR)/.download-linux
 	cp $(ATTIC)/linux-tina.config .config
 	echo 'CONFIG_FB_CONSOLE_SUNXI=y' >> .config
 	echo 'CONFIG_FRAMEBUFFER_CONSOLE=y' >> .config
+	echo 'CONFIG_TOUCHSCREEN_EDT_FT5X06=y' >> .config
 	make ARCH=riscv olddefconfig
 	touch $(BLDDIR)/.prepare-linux
 
