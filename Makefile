@@ -4,7 +4,8 @@
 # Change this if you want!
 CROSS_COMPILE=/usr/bin/riscv64-linux-gnu-
 NPROC=$(shell nproc)
-DTS=$(PWD)/attic/dts/board_waft.dts
+LINUXDTS=$(PWD)/attic/dts/board_waft.dts
+UBOOTDTS=$(PWD)/attic/dts/uboot-board.dts
 ENV=$(PWD)/extra/u-boot.env
 
 BLDDIR=$(PWD)/build
@@ -93,7 +94,7 @@ prepare-u-boot $(BLDDIR)/.prepare-u-boot: $(BLDDIR)/.download-u-boot
 	git switch --discard-changes --detach "$(UBOOTCOMMIT)"
 	patch -p1 < $(ATTIC)/u-boot-tina-diff.patch
 	patch -p1 < $(PATCHES)/u-boot.patch
-	cp $(ATTIC)/dts/uboot-board.dts arch/riscv/dts/.board-uboot.dts
+	cp $(UBOOTDTS) arch/riscv/dts/.board-uboot.dts
 	cp $(ATTIC)/u-boot-tina.config .config
 	echo 'CONFIG_DISP2_SUNXI=y' >> .config
 	echo 'CONFIG_BOOT_GUI=y' >> .config
@@ -162,7 +163,7 @@ build-dtb $(BLDDIR)/.build-dtb: $(BLDDIR)/.build-linux
 	DTSDIR=arch/riscv/boot/dts/sunxi
 	rm -rf $$DTSDIR/mydts.dts $$DTSDIR/mydts.dtb
 	echo 'dtb-y += mydts.dtb' > $$DTSDIR/Makefile
-	cp $(DTS) $$DTSDIR/mydts.dts
+	cp $(LINUXDTS) $$DTSDIR/mydts.dts
 	make ARCH=riscv dtbs
 	touch $(BLDDIR)/.build-dtb
 
