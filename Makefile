@@ -186,6 +186,13 @@ build-firmware $(BLDDIR)/.build-firmware: $(BLDDIR)/.prepare-firmware
 	cp -r firmware/firmware/linux-firmware/xr829/*.bin lib/firmware
 	touch $(BLDDIR)/.build-firmware
 
+build-uimage $(BLDDIR)/.build-uimage: $(BLDDIR)/.build-linux $(BLDDIR)/.build-u-boot
+	@set -ex
+	cd $(BLDDIR)
+	u-boot/tools/mkimage -A riscv -O linux -T kernel -C gzip -a 0x40200000 \
+		-d linux/arch/riscv/boot/Image.gz uImage
+	touch $(BLDDIR)/.build-uimage
+
 clean-prepare:
 	rm -rf $(BLDDIR)/.prepare-linux
 	rm -rf $(BLDDIR)/.prepare-spl
@@ -195,6 +202,7 @@ clean-prepare:
 	rm -rf $(BLDDIR)/.prepare-firmware
 
 clean-build:
+	rm -rf $(BLDDIR)/uImage
 	rm -rf $(BLDDIR)/.build-linux
 	rm -rf $(BLDDIR)/.build-spl
 	rm -rf $(BLDDIR)/.build-opensbi
@@ -203,9 +211,10 @@ clean-build:
 	rm -rf $(BLDDIR)/.build-dtb
 	rm -rf $(BLDDIR)/.build-toc
 	rm -rf $(BLDDIR)/.build-firmware
+	rm -rf $(BLDDIR)/.build-uimage
 	rm -rf $(BLDDIR)/lib
 
 prepare: $(BLDDIR)/.prepare-linux $(BLDDIR)/.prepare-spl $(BLDDIR)/.prepare-opensbi $(BLDDIR)/.prepare-u-boot $(BLDDIR)/.prepare-mkimage $(BLDDIR)/.prepare-firmware
-build: $(BLDDIR)/.build-linux $(BLDDIR)/.build-spl $(BLDDIR)/.build-toc $(BLDDIR)/.build-firmware
+build: $(BLDDIR)/.build-linux $(BLDDIR)/.build-spl $(BLDDIR)/.build-toc $(BLDDIR)/.build-firmware $(BLDDIR)/.build-uimage
 rebuild: clean-build build
 reprepare: clean-build clean-prepare prepare
