@@ -90,6 +90,9 @@ prepare-u-boot $(BLDDIR)/.prepare-u-boot: $(BLDDIR)/.download-u-boot
 	patch -p1 < $(PATCHES)/u-boot.patch
 	cp $(ATTIC)/dts/uboot-board.dts arch/riscv/dts/.board-uboot.dts
 	cp $(ATTIC)/u-boot-tina.config .config
+	echo 'CONFIG_DISP2_SUNXI=y' >> .config
+	echo 'CONFIG_SUNXI_SPINOR_BMP=y' >> .config
+	echo 'CONFIG_LCD_SUPPORT_ST7701S_RGB=y' >> .config
 	make ARCH=riscv CROSS_COMPILE=$(CROSS_COMPILE) olddefconfig
 	touch $(BLDDIR)/.prepare-u-boot
 
