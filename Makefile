@@ -193,6 +193,12 @@ build-uimage $(BLDDIR)/.build-uimage: $(BLDDIR)/.build-linux $(BLDDIR)/.build-u-
 		-d linux/arch/riscv/boot/Image.gz uImage
 	touch $(BLDDIR)/.build-uimage
 
+build-uenv $(BLDDIR)/.build-uenv: $(BLDDIR)/.build-u-boot
+	@set -ex
+	cd $(BLDDIR)
+	u-boot/tools/mkenvimage -r -s 0x20000 -o uEnv $(ATTIC)/u-boot-tina.env
+	touch $(BLDDIR)/.build-uenv
+
 clean-prepare:
 	rm -rf $(BLDDIR)/.prepare-linux
 	rm -rf $(BLDDIR)/.prepare-spl
@@ -203,6 +209,7 @@ clean-prepare:
 
 clean-build:
 	rm -rf $(BLDDIR)/uImage
+	rm -rf $(BLDDIR)/uEnv
 	rm -rf $(BLDDIR)/.build-linux
 	rm -rf $(BLDDIR)/.build-spl
 	rm -rf $(BLDDIR)/.build-opensbi
@@ -212,9 +219,10 @@ clean-build:
 	rm -rf $(BLDDIR)/.build-toc
 	rm -rf $(BLDDIR)/.build-firmware
 	rm -rf $(BLDDIR)/.build-uimage
+	rm -rf $(BLDDIR)/.build-uenv
 	rm -rf $(BLDDIR)/lib
 
 prepare: $(BLDDIR)/.prepare-linux $(BLDDIR)/.prepare-spl $(BLDDIR)/.prepare-opensbi $(BLDDIR)/.prepare-u-boot $(BLDDIR)/.prepare-mkimage $(BLDDIR)/.prepare-firmware
-build: $(BLDDIR)/.build-linux $(BLDDIR)/.build-spl $(BLDDIR)/.build-toc $(BLDDIR)/.build-firmware $(BLDDIR)/.build-uimage
+build: $(BLDDIR)/.build-linux $(BLDDIR)/.build-spl $(BLDDIR)/.build-toc $(BLDDIR)/.build-firmware $(BLDDIR)/.build-uimage $(BLDDIR)/.build-uenv
 rebuild: clean-build build
 reprepare: clean-build clean-prepare prepare
