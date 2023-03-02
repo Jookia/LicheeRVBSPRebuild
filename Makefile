@@ -152,7 +152,7 @@ build-mkimage $(BLDDIR)/.build-mkimage: $(BLDDIR)/.prepare-mkimage
 build-dtb $(BLDDIR)/.build-dtb: $(BLDDIR)/.build-linux
 	@set -ex
 	cd $(BLDDIR)/linux
-	DTSDIR=arch/riscv/boot/dts/sunxi/
+	DTSDIR=arch/riscv/boot/dts/sunxi
 	rm -rf $$DTSDIR/mydts.dts $$DTSDIR/mydts.dtb
 	echo 'dtb-y += mydts.dtb' > $$DTSDIR/Makefile
 	cp $(DTS) $$DTSDIR/mydts.dts
