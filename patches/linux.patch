@@ -12,6 +12,19 @@ index 972fe3492..6c585a3b9 100644
  KBUILD_CFLAGS += -march=$(riscv-march-cflags-y) -Wa,-march=$(riscv-march-aflags-y)
  KBUILD_AFLAGS += -march=$(riscv-march-aflags-y)
  
+diff --git a/arch/riscv/boot/dts/sunxi/sun20iw1p1.dtsi b/arch/riscv/boot/dts/sunxi/sun20iw1p1.dtsi
+index d3e1bf20c..b9d659c6f 100644
+--- a/arch/riscv/boot/dts/sunxi/sun20iw1p1.dtsi
++++ b/arch/riscv/boot/dts/sunxi/sun20iw1p1.dtsi
+@@ -5,8 +5,6 @@
+
+ /memreserve/ 0x40000000 0x200000;  /* opensbi */
+
+-/memreserve/ 0x42000000 0x100000;  /* dsp used 1MB */
+-
+ #include <dt-bindings/clock/sun8iw20-ccu.h>
+ #include <dt-bindings/clock/sun8iw20-r-ccu.h>
+ #include <dt-bindings/clock/sun8iw20-rtc.h>
 diff --git a/arch/riscv/boot/dts/sunxi/Makefile b/arch/riscv/boot/dts/sunxi/Makefile
 index 7a7c38bb7..8b1378917 100644
 --- a/arch/riscv/boot/dts/sunxi/Makefile
