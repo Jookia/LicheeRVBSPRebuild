@@ -169,6 +169,9 @@ build-toc $(BLDDIR)/.build-toc: $(BLDDIR)/.build-mkimage $(BLDDIR)/.build-opensb
 	[u-boot]
 	file = u-boot/u-boot.bin
 	addr = 0x42000000
+	[dtb]
+	file = linux/arch/riscv/boot/dts/sunxi/mydts.dtb
+	addr = 0x42200000
 	EOF
 	mkimage/tools/mkimage -T sunxi_toc1 -d toc.cfg toc
 	rm toc.cfg
