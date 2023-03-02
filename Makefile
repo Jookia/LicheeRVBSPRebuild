@@ -189,8 +189,8 @@ build-firmware $(BLDDIR)/.build-firmware: $(BLDDIR)/.prepare-firmware
 build-uimage $(BLDDIR)/.build-uimage: $(BLDDIR)/.build-linux $(BLDDIR)/.build-u-boot
 	@set -ex
 	cd $(BLDDIR)
-	u-boot/tools/mkimage -A riscv -O linux -T kernel -C gzip -a 0x40200000 \
-		-d linux/arch/riscv/boot/Image.gz uImage
+	u-boot/tools/mkimage -A riscv -O linux -T kernel -C none -a 0x40200000 \
+		-d linux/arch/riscv/boot/Image uImage
 	touch $(BLDDIR)/.build-uimage
 
 build-uenv $(BLDDIR)/.build-uenv: $(BLDDIR)/.build-u-boot
