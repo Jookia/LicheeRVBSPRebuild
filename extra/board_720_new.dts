@@ -421,12 +421,14 @@
 	pwm7_pin_a: pwm7@0 {
 		pins = "PD22";
 		function = "pwm7";
+		muxsel = <5>;
 		drive-strength = <10>;
 		bias-pull-up;
 	};
 
 	pwm7_pin_b: pwm7@1 {
 		pins = "PD22";
+		muxsel = <0>;
 		function = "gpio_in";
 	};
 
