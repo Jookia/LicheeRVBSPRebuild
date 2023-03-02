@@ -90,7 +90,6 @@ prepare-u-boot $(BLDDIR)/.prepare-u-boot: $(BLDDIR)/.download-u-boot
 	patch -p1 < $(PATCHES)/u-boot.patch
 	cp $(ATTIC)/dts/uboot-board.dts arch/riscv/dts/.board-uboot.dts
 	cp $(ATTIC)/u-boot-tina.config .config
-	echo 'CONFIG_SYS_TEXT_BASE=0x40100000' >> .config
 	make ARCH=riscv CROSS_COMPILE=$(CROSS_COMPILE) olddefconfig
 	touch $(BLDDIR)/.prepare-u-boot
 
@@ -166,7 +165,7 @@ build-toc $(BLDDIR)/.build-toc: $(BLDDIR)/.build-mkimage $(BLDDIR)/.build-opensb
 	addr = 0x40000000
 	[u-boot]
 	file = u-boot/u-boot.bin
-	addr = 0x40100000
+	addr = 0x42000000
 	EOF
 	mkimage/tools/mkimage -T sunxi_toc1 -d toc.cfg toc
 	rm toc.cfg
