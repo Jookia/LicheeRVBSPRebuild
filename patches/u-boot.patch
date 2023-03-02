@@ -108,7 +108,7 @@ index 41581f4..51f5d81 100644
  endif
  
 -ARCH_FLAGS = -march=$(ARCH_BASE)$(ARCH_A)$(ARCH_C)xthead -mabi=$(ABI) \
-+ARCH_FLAGS = -march=$(ARCH_BASE)$(ARCH_A)$(ARCH_C)_zicsr_zifencei -mabi=$(ABI) \
++ARCH_FLAGS = -march=$(ARCH_BASE)$(ARCH_A)fd$(ARCH_C)_zicsr_zifencei -mabi=$(ABI) \
  	     -mcmodel=$(CMODEL)
  
  PLATFORM_CPPFLAGS	+= $(ARCH_FLAGS)
