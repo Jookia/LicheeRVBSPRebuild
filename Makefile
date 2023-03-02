@@ -60,6 +60,7 @@ prepare-linux $(BLDDIR)/.prepare-linux: $(BLDDIR)/.download-linux
 	git switch --discard-changes --detach "$(KERNELCOMMIT)"
 	git clean -dfx
 	patch -p1 < $(ATTIC)/linux-tina-diff.patch
+	patch -p1 < $(ATTIC)/linux-r8723ds.patch
 	patch -p1 < $(PATCHES)/linux.patch
 	cp $(ATTIC)/linux-tina.config .config
 	make ARCH=riscv olddefconfig
