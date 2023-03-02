@@ -295,7 +295,7 @@
 
 	lcd_power       = "vcc-lcd";
 	lcd_pin_power   = "vcc-pd";
-	lcd_gpio_0      = <&pio PG 13 GPIO_ACTIVE_HIGH>;
+	lcd_gpio_0      = <&pio PG 13 GPIO_ACTIVE_LOW>;
 	lcd_gpio_1      = <&pio PE 14 GPIO_ACTIVE_HIGH>;
 	lcd_gpio_2      = <&pio PE 12 GPIO_ACTIVE_HIGH>;
 	lcd_gpio_3      = <&pio PE 15 GPIO_ACTIVE_HIGH>;
