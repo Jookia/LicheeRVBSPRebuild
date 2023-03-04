@@ -37,6 +37,47 @@ As of February 2023 there are only three reasons you would want to use this code
 - You want to use the XR829 Wi-Fi chip
 - You are a developer trying to fix the screen or Wi-Fi
 
+HOW TO USE
+----------
+
+Install the following dependencies:
+
+- Standard tools for compiling things on Linux
+- GCC for RISC-V
+- dosfstools
+- btrfs-progs
+- parted
+- gptfdisk
+
+Adjust the top Makefile variables to your requirements. Here's what I use:
+
+```
+CROSS_COMPILE=/usr/bin/riscv64-linux-gnu-
+NPROC=$(shell nproc)
+LINUXDTS=$(PWD)/extra/board_720_new.dts
+UBOOTDTS=$(PWD)/extra/uboot-board-720.dts
+ENV=$(PWD)/extra/u-boot.env
+DEVICE=/dev/sdb
+DEVICEPART=/dev/sdb
+MOUNT=/mnt/lichee
+```
+
+If you want to set up a fresh SD card or image, run 'make partition'.
+Skip this step if your SD card already has an image from Sipeed.
+
+Next install your flavor of Linux to the SD card's rootfs.
+How to do this depends on your distribution of choice.
+
+For my case I downloaded an [Arch Linux RISC-V](https://archriscv.felixc.at/) rootfs,
+ran 'make mount', extracted the rootfs to /mnt/lichee and ran 'make unmount'.
+
+If you have QEMU user mode emulation installed on your system you can then chroot in
+and set up the root by running something like 'systemd-nspawn -i /dev/sdb'.
+
+After you have a rootfs ready, run 'make install' to build and install the binaries.
+
+Now you should have a working SD card or image ready. Good luck!
+
 LICENSE
 -------
 
