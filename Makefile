@@ -7,6 +7,9 @@ NPROC=$(shell nproc)
 LINUXDTS=$(PWD)/attic/dts/board_waft.dts
 UBOOTDTS=$(PWD)/attic/dts/uboot-board.dts
 ENV=$(PWD)/extra/u-boot.env
+DEVICE=/dev/loop0
+DEVICEPART=/dev/loop0p
+MOUNT=/mnt/lichee
 
 BLDDIR=$(PWD)/build
 ATTIC=$(PWD)/attic
@@ -206,6 +209,52 @@ build-uenv $(BLDDIR)/.build-uenv: $(BLDDIR)/.build-u-boot
 	cd $(BLDDIR)
 	u-boot/tools/mkenvimage -r -s 0x20000 -o uEnv $(ENV)
 	touch $(BLDDIR)/.build-uenv
+
+root-partition:
+	@set -ex
+	sgdisk -Z -j 144 -a 8 \
+	   -n 1:192K:+8M -c 1:boot-resource \
+	   -n 2:8384K:+1M -c 2:dsp0 \
+	   -n 3:9408K:+1M -c 3:env \
+	   -n 4:10432K:+1M -c 4:env-redund \
+	   -n 5:20480K:+100M -c 5:boot \
+	   -n 6:122880K:+8M -c 6:recovery \
+	   -N 7 -c 7:rootfs \
+	   -p $(DEVICE)
+	partprobe $(DEVICE)
+	mkfs.fat $(DEVICEPART)1
+	mkfs.btrfs -f $(DEVICEPART)7
+	sync $(DEVICE)
+
+root-install:
+	@set -x
+	dd if=build/spl/nboot/boot0_sdcard_sun20iw1p1.bin of=$(DEVICE) obs=1024 oseek=8
+	dd if=build/spl/nboot/boot0_sdcard_sun20iw1p1.bin of=$(DEVICE) obs=1024 oseek=128
+	dd if=build/toc of=$(DEVICE) obs=1024 oseek=12288
+	dd if=build/toc of=$(DEVICE) obs=1024 oseek=16400
+	cp build/uEnv $(DEVICEPART)3
+	cp build/uEnv $(DEVICEPART)4
+	cp build/uImage $(DEVICEPART)5
+	mkdir -p $(MOUNT)
+	mount $(DEVICEPART)1 $(MOUNT)
+	cp attic/bootlogo.bmp $(MOUNT)
+	umount $(MOUNT)
+	mount $(DEVICEPART)7 $(MOUNT)
+	mkdir -p $(MOUNT)/lib
+	for i in build/lib/modules/*; do
+		KVER=$$(basename $$i)
+		rm -r $(MOUNT)/lib/modules/$$KVER
+	done
+	cp -r build/lib/* $(MOUNT)/lib
+	umount $(MOUNT)
+	rmdir $(MOUNT)
+	sync $(DEVICE)
+
+partition:
+	sudo make root-partition
+
+install: build
+	sudo make root-install
 
 clean-prepare:
 	rm -rf $(BLDDIR)/.prepare-linux
