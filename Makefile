@@ -221,7 +221,7 @@ root-partition:
 	   -n 4:10432K:+1M -c 4:env-redund \
 	   -n 5:20480K:+100M -c 5:boot \
 	   -n 6:122880K:+8M -c 6:recovery \
-	   -N 7 -c 7:rootfs \
+	   -N 7 -c 7:rootfs -t 7:72ec70a6-cf74-40e6-bd49-4bda08e8f224 \
 	   -p $(DEVICE)
 	partprobe $(DEVICE)
 	mkfs.fat $(DEVICEPART)1
