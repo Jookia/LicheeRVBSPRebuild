@@ -71,6 +71,8 @@ prepare-linux $(BLDDIR)/.prepare-linux: $(BLDDIR)/.download-linux
 	echo 'CONFIG_FB_CONSOLE_SUNXI=y' >> .config
 	echo 'CONFIG_FRAMEBUFFER_CONSOLE=y' >> .config
 	echo 'CONFIG_TOUCHSCREEN_EDT_FT5X06=y' >> .config
+	echo 'CONFIG_BTRFS_FS=y' >> .config
+	echo 'BTRFS_FS_POSIX_ACL=y' >> .config
 	make ARCH=riscv olddefconfig
 	touch $(BLDDIR)/.prepare-linux
 
