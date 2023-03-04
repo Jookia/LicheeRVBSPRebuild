@@ -258,6 +258,14 @@ partition:
 install: build
 	sudo make root-install
 
+mount:
+	sudo mkdir -p $(MOUNT)
+	sudo mount $(DEVICEPART)7 $(MOUNT)
+
+unmount:
+	sudo umount $(MOUNT)
+	sudo rmdir $(MOUNT)
+
 clean-prepare:
 	rm -rf $(BLDDIR)/.prepare-linux
 	rm -rf $(BLDDIR)/.prepare-spl
