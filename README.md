@@ -1,5 +1,5 @@
 README
-------
+======
 
 The Lichee RV is an Allwinner D1 (sun20iw1p1) development board.
 
@@ -20,7 +20,7 @@ Here are some useful projects:
 - [linux-sunxi.org's Allwinner D1 SDK mirror](https://linux-sunxi.org/D1_SDK_Howto)
 
 WARNING
--------
+=======
 
 This project is a dead end: It is incompatible with mainline Linux or U-Boot.
 There will be no upgrades, bug fixes or support from Allwinner, Sipeed or me.
@@ -38,7 +38,7 @@ As of February 2023 there are only three reasons you would want to use this code
 - You are a developer trying to fix the screen or Wi-Fi
 
 HOW TO USE
-----------
+==========
 
 Install the following dependencies:
 
@@ -79,7 +79,7 @@ After you have a rootfs ready, run 'make install' to build and install the binar
 Now you should have a working SD card or image ready. Good luck!
 
 LICENSE
--------
+=======
 
 All original contributions are licensed under the GPL2 or any later version.
 See LICENSE.GPL2.md for full details.
