@@ -78,6 +78,11 @@ After you have a rootfs ready, run 'make install' to build and install the binar
 
 Now you should have a working SD card or image ready. Good luck!
 
+NOTES
+=====
+
+If you are a developer or have more questions, see my [NOTES](NOTES.md).
+
 LICENSE
 =======
 
